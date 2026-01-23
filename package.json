@@ -11,8 +11,9 @@
     "format": "prettier --write .",
     "test": "vitest run",
     "db:push": "drizzle-kit generate && drizzle-kit migrate",
-    "db:seed": "node scripts/seed-db.mjs",
-    "db:init": "node scripts/init-db.mjs"
+    "db:seed": "tsx scripts/seed-db.mjs",
+    "db:init": "tsx scripts/init-db.mjs",
+    "render:build": "pnpm install --no-frozen-lockfile && pnpm build && (pnpm db:init || true) && (pnpm db:seed || true)"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.693.0",
