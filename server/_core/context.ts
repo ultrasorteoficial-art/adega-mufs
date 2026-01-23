@@ -10,6 +10,7 @@ export type TrpcContext = {
 export async function createContext(
   opts: CreateExpressContextOptions
 ): Promise<TrpcContext> {
+  // Usuário simulado para garantir que o sistema funcione sem login real
   const mockUser: User = {
     id: 1,
     openId: "admin-mock-id",

@@ -10,6 +10,7 @@ let _pool: mysql.Pool | null = null;
 export async function getDb() {
   if (!_db && process.env.DATABASE_URL) {
     try {
+      // Configuração robusta para TiDB Cloud Serverless
       _pool = mysql.createPool({
         uri: process.env.DATABASE_URL,
         ssl: {
@@ -17,12 +18,14 @@ export async function getDb() {
         },
         waitForConnections: true,
         connectionLimit: 10,
-        queueLimit: 0
+        queueLimit: 0,
+        enableKeepAlive: true,
+        keepAliveInitialDelay: 10000,
       });
       _db = drizzle(_pool);
-      console.log("[Database] Connected successfully with SSL");
+      console.log("[Database] Connected successfully with SSL to TiDB Cloud");
     } catch (error) {
-      console.warn("[Database] Failed to connect:", error);
+      console.error("[Database] Failed to connect:", error);
       _db = null;
     }
   }
@@ -254,7 +257,7 @@ export async function registerPrice(productId: number, competitorId: number, val
     await db.insert(priceHistory).values({
       productId,
       competitorId,
-      previousValue: undefined,
+      previousValue: null,
       newValue: value,
       changedBy: registeredBy,
       changeType: "created",
@@ -357,16 +360,27 @@ export async function getPriceComparisonMatrix() {
     const productPrices = allPrices.filter(p => p.productId === product.id);
     
     const competitorPrices: Record<string, any> = {};
+    let sum = 0;
+    let count = 0;
+    let lastUpdated = product.updatedAt;
+
     allCompetitors.forEach(competitor => {
       const price = productPrices.find(p => p.competitorId === competitor.id);
       competitorPrices[competitor.code] = price ? price.value : null;
+      if (price) {
+        sum += parseFloat(price.value as any);
+        count++;
+        if (price.updatedAt > lastUpdated) lastUpdated = price.updatedAt;
+      }
     });
     
     return {
       id: product.id,
       name: product.name,
       category: product.category,
-      ...competitorPrices,
+      average: count > 0 ? (sum / count).toFixed(2) : "0.00",
+      lastUpdated,
+      competitorPrices,
     };
   });
 }

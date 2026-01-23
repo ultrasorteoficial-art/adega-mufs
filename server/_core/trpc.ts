@@ -8,5 +8,6 @@ const t = initTRPC.context<TrpcContext>().create({
 
 export const router = t.router;
 export const publicProcedure = t.procedure;
+// Tornando procedimentos protegidos públicos para acesso livre sem login
 export const protectedProcedure = t.procedure;
 export const adminProcedure = t.procedure;
